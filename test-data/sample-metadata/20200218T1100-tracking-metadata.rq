@@ -1,0 +1,25 @@
+PREFIX : <http://industrialinference.com/migrations/0.1/>
+PREFIX mig: <http://industrialinference.com/migrations/0.1/>
+PREFIX owl:   <http://www.w3.org/2002/07/owl#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+
+INSERT DATA {
+	GRAPH :migrations {
+		_:mig1 a :Migration ;
+			:ordinal 1 ;
+			:dtApplied "20200219T134522.09082" ;
+			:appliedBy "andrewm" ;
+			:migrationHash "abc123" ;
+			:migratorVersion "0.1" ;
+			:originalPath "./test-data/migrations/20200218T1200-drop.rq" .
+		_:mig2 a :Migration ;
+			:ordinal 2 ;
+			:dtApplied "20200219T134522.123233" ;
+			:appliedBy "andrewm" ;
+			:migrationHash "def234" ;
+			:migratorVersion "0.1" ;
+			:originalPath "./test-data/migrations/20200218T1300-test1.rq" .
+	}
+}
