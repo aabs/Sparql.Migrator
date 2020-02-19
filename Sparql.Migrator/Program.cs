@@ -2,6 +2,8 @@
 using System.IO;
 using CommandLine;
 using CommandLine.Text;
+using VDS.RDF.Query;
+using VDS.RDF.Update;
 
 namespace Sparql.Migrator
 {
@@ -10,10 +12,19 @@ namespace Sparql.Migrator
 
         static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<Options>(args)
+            var parserResult = Parser.Default.ParseArguments<Options>(args);
+            parserResult
                 .WithParsed<Options>(o =>
                 {
-                    var migrator = new Migrator(o);
+                    var updateProcessor = new RemoteUpdateProcessor(o.Path);
+                    var queryProcessor = new RemoteQueryProcessor(new SparqlRemoteEndpoint(new Uri(o.Path)));
+
+                    var migrator = new Migrator(o, queryProcessor, updateProcessor);
+                    if (!migrator.OptionsAreValid(o))
+                    {
+                        Console.WriteLine("Sorry the options are not valid");
+                        Console.WriteLine(HelpText.RenderUsageText(parserResult));
+                    }
                     migrator.Run();
                 });
         }
