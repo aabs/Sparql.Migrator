@@ -59,7 +59,7 @@ namespace Sparql.Migrator.UnitTests
             var sut = new Migrator(opts, qp, up, new FileSystem());
             ts.Triples.Count().ShouldBe(14);
             sut.Run();
-            ts.Triples.Count().ShouldBe(28);
+            ts.Triples.Count().ShouldBe(29);
         }
     }
 }
