@@ -4,10 +4,18 @@ namespace Sparql.Migrator
 {
     internal class CurrentState
     {
-        public List<Migration> Migrations => new List<Migration>();
+        private readonly List<Migration> _migrations = new List<Migration>();
         public void AddPreviouslyAppliedMigration(Migration mig)
         {
-            Migrations.Add(mig);
+            _migrations.Add(mig);
+        }
+
+        public List<Migration> Migrations
+        {
+            get
+            {
+                return _migrations;
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -11,17 +12,17 @@ namespace Sparql.Migrator
 {
     public class Migrator
     {
+        private readonly IFileSystem _fileSystem;
         private readonly Options _options;
         private readonly ISparqlQueryProcessor _queryProcessor;
         private readonly ISparqlUpdateProcessor _updateProcessor;
 
-        public Migrator(Options options, ISparqlQueryProcessor queryProcessor, ISparqlUpdateProcessor updateProcessor)
+        public Migrator(Options options, ISparqlQueryProcessor queryProcessor, ISparqlUpdateProcessor updateProcessor, IFileSystem fileSystem)
         {
             _options = options;
             _queryProcessor = queryProcessor;
             _updateProcessor = updateProcessor;
-            //_updateProcessor = new RemoteUpdateProcessor(_options.Path);
-            //_queryProcessor = new RemoteQueryProcessor(new SparqlRemoteEndpoint(new Uri(_options.Path)));
+            _fileSystem = fileSystem;
 
             if (_options.Verbose)
             {
@@ -161,7 +162,7 @@ namespace Sparql.Migrator
 
         private IEnumerable<Script> GetScripts()
         {
-            foreach (var file in Directory.GetFiles(_options.Path, " *.rq"))
+            foreach (var file in _fileSystem.Directory.GetFiles(_options.Path, "*.rq", SearchOption.TopDirectoryOnly))
             {
                 yield return new Script(file);
             }
@@ -191,7 +192,7 @@ namespace Sparql.Migrator
         private CurrentState ParseGraphIntoCurrentState(IGraph g)
         {
             var result = new CurrentState();
-            foreach (var mig in g.WalkAll("http://industrialinference.com/migrations/0.1#Migration"))
+            foreach (var mig in g.WalkAll("mig:Migration"))
             {
                 var ordinal = mig.DataProperty<int>("mig:ordinal");
                 var dtApplied = mig.DataProperty<DateTime>("mig:dtApplied");
@@ -219,7 +220,16 @@ namespace Sparql.Migrator
             var ps = new SparqlParameterizedString();
             ps.CommandText = @"
                 PREFIX mig: <http://industrialinference.com/migrations/0.1#>
-                CONSTRUCT WHERE {
+                CONSTRUCT {
+		            [] a mig:Migration ;
+			            mig:ordinal ?ordinal ;
+			            mig:dtApplied ?dtApplied ;
+                        mig:appliedBy ?appliedBy ;
+                        mig:migrationHash ?migrationHash;
+                        mig:migratorVersion ?migratorVersion;
+                        mig:originalPath ?originalPath .
+                }
+                WHERE {
 	                GRAPH mig:migrations {
 		                _:mig a mig:Migration ;
 			                mig:ordinal ?ordinal ;
@@ -234,6 +244,7 @@ namespace Sparql.Migrator
             var parser = new SparqlQueryParser();
             var query = parser.ParseFromString(ps);
             var result = _queryProcessor.ProcessQuery(query) as IGraph;
+            result?.NamespaceMap.AddNamespace("rdf", new Uri("http://www.w3.org/1999/02/22-rdf-syntax-ns#"));
             result?.NamespaceMap.AddNamespace("mig", new Uri("http://industrialinference.com/migrations/0.1#"));
             return result;
         }
