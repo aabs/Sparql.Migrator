@@ -2,7 +2,7 @@
   "profiles": {
     "Sparql.Migrator": {
       "commandName": "Project",
-      "commandLineArgs": "-s \"http://localhost:8889/blazegraph/namespace/kb/sparql\" -p \"./mymigrations\""
+      "commandLineArgs": "-s \"http://localhost:8889/blazegraph/namespace/kb/sparql\" -p \"C:\\Users\\pra.andrewm\\source\\repos\\Sparql.Migrator\\test-data\\migrations\""
     }
   }
 }

@@ -19,8 +19,11 @@ namespace Sparql.Migrator
         /// NB. the <paramref name="nodeType"/> should be in the form of a QName prefixed using a namespace prefix already known to the graph (i.e. such as was provided in the original SPARQL query)
         /// </remarks>
         public static IEnumerable<Walker> WalkAll(this IGraph graph, string nodeType)
-            => graph.GetTriplesWithPredicateObject(graph.GetUriNode("rdf:type"), graph.GetUriNode(nodeType))
+        {
+            var triples = graph.GetTriplesWithPredicateObject(graph.CreateUriNode("rdf:type"), graph.CreateUriNode(nodeType));
+            return triples
                 .Select(t => new Walker(graph, t.Subject));
+        }
 
         /// <summary>Extract the value of an RDF data property by walking the predicate</summary>
         /// <typeparam name="T">The type to return the data in</typeparam>

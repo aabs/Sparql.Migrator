@@ -2,7 +2,7 @@
 
 namespace Sparql.Migrator
 {
-    internal class CurrentState
+    public class CurrentState
     {
         private readonly List<Migration> _migrations = new List<Migration>();
         public void AddPreviouslyAppliedMigration(Migration mig)

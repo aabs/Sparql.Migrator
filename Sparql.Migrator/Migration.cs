@@ -2,7 +2,7 @@
 
 namespace Sparql.Migrator
 {
-    internal class Migration
+    public class Migration
     {
         public string appliedBy;
         public DateTime dtApplied;

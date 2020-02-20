@@ -1,88 +1,64 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
-using VDS.RDF;
-using VDS.RDF.Parsing;
-using VDS.RDF.Query;
-using VDS.RDF.Update;
 
 namespace Sparql.Migrator
 {
-    public class Migrator
+    public class Migrator : IMigrator
     {
-        private readonly IFileSystem _fileSystem;
-        private readonly Options _options;
-        private readonly ISparqlQueryProcessor _queryProcessor;
-        private readonly ISparqlUpdateProcessor _updateProcessor;
+        private readonly IMetadataProvider _metadataProvider;
+        private readonly IScriptApplicator _scriptApplicator;
+        private readonly IScriptProvider _scriptProvider;
+        private readonly ITransactionProvider _transactionProvider;
 
-        public Migrator(Options options, ISparqlQueryProcessor queryProcessor, ISparqlUpdateProcessor updateProcessor, IFileSystem fileSystem)
+        public Migrator(IScriptProvider scriptProvider, IScriptApplicator scriptApplicator,
+            IMetadataProvider metadataProvider, ITransactionProvider transactionProvider)
         {
-            _options = options;
-            _queryProcessor = queryProcessor;
-            _updateProcessor = updateProcessor;
-            _fileSystem = fileSystem;
-
-            if (_options.Verbose)
-            {
-                Console.WriteLine($"Verbose output enabled. Current Arguments: -v {options.Verbose}");
-                Console.WriteLine("Quick Start Example! App is in Verbose mode!");
-            }
-            else
-            {
-                Console.WriteLine($"Current Arguments: -v {options.Verbose}");
-                Console.WriteLine("Quick Start Example!");
-            }
+            _scriptProvider = scriptProvider;
+            _scriptApplicator = scriptApplicator;
+            _metadataProvider = metadataProvider;
+            _transactionProvider = transactionProvider;
         }
 
         public bool OptionsAreValid(Options o)
         {
-            try
-            {
-                return Directory.Exists(o.Path) && Directory.GetFiles(o.Path, "*.rq").Length > 0 &&
-                       Uri.IsWellFormedUriString(o.ServerEndpoint, UriKind.Absolute);
-            }
-            catch
-            {
-                return false;
-            }
+            return _scriptProvider.OptionsAreValid(o) && _scriptApplicator.OptionsAreValid(o) &&
+                   _metadataProvider.OptionsAreValid(o);
         }
 
         public void Run()
         {
-            var currentState = GetCurrentState();
-            StartTransaction();
+            var currentState = _metadataProvider.GetCurrentState();
+            _transactionProvider.Start();
             try
             {
-                foreach (var script in GetScripts())
+                foreach (var script in _scriptProvider.GetAllScripts())
                 {
                     if (ScriptShouldBeRun(script, currentState))
                     {
-                        if (RunScript(script, currentState))
+                        if (_scriptApplicator.ApplyScript(script))
                         {
                             WriteUpdateEntry(script, currentState);
                         }
                     }
                 }
 
-                CommitTransaction();
+                _transactionProvider.Commit();
             }
             catch (Exception e)
             {
-                RollbackTransaction();
+                _transactionProvider.Rollback();
                 Console.WriteLine(e);
                 throw;
             }
         }
 
-        private void WriteUpdateEntry(Script script, CurrentState currentState)
+        public void WriteUpdateEntry(Script script, CurrentState currentState)
         {
             var mig = CommitNewScriptAsMigrationRecord(script, currentState);
             currentState.AddPreviouslyAppliedMigration(mig);
         }
 
-        private Migration CommitNewScriptAsMigrationRecord(Script script, CurrentState currentState)
+        public Migration CommitNewScriptAsMigrationRecord(Script script, CurrentState currentState)
         {
             int ord = 0;
             var mostRecentMigration = currentState.Migrations.OrderByDescending(m => m.ordinal).FirstOrDefault();
@@ -91,7 +67,7 @@ namespace Sparql.Migrator
                 ord = ++mostRecentMigration.ordinal;
             }
 
-            var result = new Migration
+            var mig = new Migration
             {
                 migrationHash = script.Hash,
                 ordinal = ord,
@@ -100,153 +76,29 @@ namespace Sparql.Migrator
                 dtApplied = DateTime.UtcNow,
                 migratorVersion = "0.1"
             };
-            var ps = new SparqlParameterizedString();
-            ps.CommandText = @"
-                PREFIX mig: <http://industrialinference.com/migrations/0.1#>
-                INSERT DATA {
-	                GRAPH mig:migrations {
-		                _:mig a mig:Migration ;
-			                mig:ordinal @ordinal ;
-			                mig:dtApplied @dtApplied ;
-                            mig:appliedBy @appliedBy ;
-                            mig:migrationHash @migrationHash;
-                            mig:migratorVersion @migratorVersion;
-                            mig:originalPath @originalPath .
-                        }
-                    }";
-            ps.SetLiteral("ordinal", result.ordinal);
-            ps.SetLiteral("dtApplied", result.dtApplied);
-            ps.SetLiteral("appliedBy", result.appliedBy);
-            ps.SetLiteral("migrationHash", result.migrationHash);
-            ps.SetLiteral("migratorVersion", result.migratorVersion);
-            ps.SetLiteral("originalPath", result.originalPath);
-            var parser = new SparqlUpdateParser();
-            var query = parser.ParseFromString(ps);
+
             try
             {
-                query.Process(_updateProcessor);
+                _metadataProvider.OnNewScriptApplication(currentState, mig);
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e);
+                Console.WriteLine("Unable to update metadata");
                 throw;
             }
 
-            return result;
+            return mig;
         }
 
-        private bool RunScript(Script script, CurrentState currentState)
+        public bool ScriptShouldBeRun(Script script, CurrentState currentState)
         {
-            var ps = new SparqlParameterizedString();
-            ps.CommandText = script.Contents;
-            var parser = new SparqlUpdateParser();
-            var query = parser.ParseFromString(ps);
-            try
+            var scriptShouldBeRun = !currentState.Migrations.Any(delegate(Migration m)
             {
-                query.Process(_updateProcessor);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool ScriptShouldBeRun(Script script, CurrentState currentState)
-        {
-            return !currentState.Migrations.Any(m =>
-                m.migrationHash.Equals(script.Hash) && m.originalPath.Equals(script.OriginalPath));
-        }
-
-        private IEnumerable<Script> GetScripts()
-        {
-            foreach (var file in _fileSystem.Directory.GetFiles(_options.Path, "*.rq", SearchOption.TopDirectoryOnly))
-            {
-                yield return new Script(file);
-            }
-        }
-
-        private void CommitTransaction()
-        {
-            // not sure whether there is a nice way to do this over SPARQL 1.1
-        }
-
-        private void RollbackTransaction()
-        {
-            // not sure whether there is a nice way to do this over SPARQL 1.1
-        }
-
-        private void StartTransaction()
-        {
-            // not sure whether there is a nice way to do this over SPARQL 1.1
-        }
-
-        private CurrentState GetCurrentState()
-        {
-            var graph = QueryForCurrentState();
-            return ParseGraphIntoCurrentState(graph);
-        }
-
-        private CurrentState ParseGraphIntoCurrentState(IGraph g)
-        {
-            var result = new CurrentState();
-            foreach (var mig in g.WalkAll("mig:Migration"))
-            {
-                var ordinal = mig.DataProperty<int>("mig:ordinal");
-                var dtApplied = mig.DataProperty<DateTime>("mig:dtApplied");
-                var appliedBy = mig.DataProperty<string>("mig:appliedBy");
-                var migrationHash = mig.DataProperty<string>("mig:migrationHash");
-                var migratorVersion = mig.DataProperty<string>("mig:migratorVersion");
-                var originalPath = mig.DataProperty<string>("mig:originalPath");
-                result.AddPreviouslyAppliedMigration(new Migration
-                {
-                    ordinal = ordinal,
-                    dtApplied = dtApplied,
-                    appliedBy = appliedBy,
-                    migrationHash = migrationHash,
-                    migratorVersion = migratorVersion,
-                    originalPath = originalPath
-                });
-            }
-
-            return result;
-        }
-
-        private IGraph QueryForCurrentState()
-        {
-            // throw new NotImplementedException();
-            var ps = new SparqlParameterizedString();
-            ps.CommandText = @"
-                PREFIX mig: <http://industrialinference.com/migrations/0.1#>
-                CONSTRUCT {
-		            [] a mig:Migration ;
-			            mig:ordinal ?ordinal ;
-			            mig:dtApplied ?dtApplied ;
-                        mig:appliedBy ?appliedBy ;
-                        mig:migrationHash ?migrationHash;
-                        mig:migratorVersion ?migratorVersion;
-                        mig:originalPath ?originalPath .
-                }
-                WHERE {
-	                GRAPH mig:migrations {
-		                _:mig a mig:Migration ;
-			                mig:ordinal ?ordinal ;
-			                mig:dtApplied ?dtApplied ;
-                            mig:appliedBy ?appliedBy ;
-                            mig:migrationHash ?migrationHash;
-                            mig:migratorVersion ?migratorVersion;
-                            mig:originalPath ?originalPath .
-                        }
-                    }";
-
-            var parser = new SparqlQueryParser();
-            var query = parser.ParseFromString(ps);
-            var result = _queryProcessor.ProcessQuery(query) as IGraph;
-            result?.NamespaceMap.AddNamespace("rdf", new Uri("http://www.w3.org/1999/02/22-rdf-syntax-ns#"));
-            result?.NamespaceMap.AddNamespace("mig", new Uri("http://industrialinference.com/migrations/0.1#"));
-            return result;
+                var hashesEqual = m.migrationHash.Equals(script.Hash);
+                var pathsEqual = m.originalPath.Equals(script.OriginalPath);
+                return hashesEqual && pathsEqual;
+            });
+            return scriptShouldBeRun;
         }
     }
 }

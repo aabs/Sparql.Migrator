@@ -10,9 +10,9 @@
 		:ordinal 1 ;
 		:dtApplied "2020-02-19T13:45:22"^^xsd:dateTime ;
 		:appliedBy "andrewm" ;
-		:migrationHash "abc123" ;
+		:migrationHash "e52bbccd334751e803e43e2eb8f6ed5917528679e4b573c8ef925c30d9a6160f" ;
 		:migratorVersion "0.1" ;
-		:originalPath "./test-data/migrations/20200218T1200-drop.rq" .
+		:originalPath "C:\Users\pra.andrewm\source\repos\Sparql.Migrator\test-data\migrations\20200218T1200-drop.rq" .
 	_:mig2 a :Migration ;
 		:ordinal 2 ;
 		:dtApplied "2020-02-19T13:45:22.123233" ;
