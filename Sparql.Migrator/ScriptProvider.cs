@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -19,12 +21,14 @@ namespace Sparql.Migrator
         public IEnumerable<Script> GetAllScripts()
         {
             using SHA256 sha256Hash = SHA256.Create();
-
+            var result = new LinkedList<Script>();
             foreach (var s in _fileSystem.Directory.GetFiles(_options.Path, "*.rq"))
             {
                 var contents = _fileSystem.File.ReadAllText(s);
-                yield return new Script(contents, s, DateTime.UtcNow, GetHash(sha256Hash, contents));
+                result.AddLast(new Script(contents, s, DateTime.UtcNow, GetHash(sha256Hash, contents))) ;
             }
+
+            return result.OrderBy(s => Path.GetFileNameWithoutExtension(s.OriginalPath));
         }
 
         public bool OptionsAreValid(Options o)

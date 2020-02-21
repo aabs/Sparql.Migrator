@@ -14,9 +14,17 @@ against the applied migrations.  If it finds a match, then it skips the script.
 Comparison of scripts to preior migrations is on the basis of both name and Hash
 Code.  If the name and hash code matches then the script is ignored.
 
-The name is only compared on the base name, not the full path, since updates
-might be applied from different locations (such as different dev machines, or
-CI/CD boxes).
+The name is only compared on the base name (filename, not including the
+directory or extension), not the full path, since updates might be applied from
+different locations (such as different dev machines, or CI/CD boxes).  I
+therefore suggest that you give the files a sensible naming convention that will
+guarantee that they get applied in the order in which you create them.  
+
+I prefer to use an ISO 8601 inspired format with precision down to the minute to
+name my files.  `20200218T1200-drop.rq` is a good example.  Another alternative
+that will work might just use sequential integers - but you have to remember to
+do sufficient padding to ensure that later scripts don't get promoted ahead of
+later ones.
 
 ## Format
 
@@ -42,6 +50,8 @@ An instance typically looks like this:
 
 ## Usage
 
+Invoking the app without params will get you the usage options.
+
 ```shell
 $ ./Sparql.Migrator.exe
 Usage: Sparql.Migrator [options...]
@@ -52,6 +62,8 @@ Options:
   -v, -verbose <Boolean>    Set output to verbose messages. (Default: False)
 ```
 
+Scripts can follow any naming convention that makes sense, 
+
 ## Example
 
 Here's an example of how to invoke it with typical settings
@@ -60,3 +72,5 @@ Here's an example of how to invoke it with typical settings
 $ Sparql.Migrator.exe -s "http://localhost:8889/blazegraph/namespace/kb/sparql" \
 	-p "/home/andrew/dev/Sparql.Migrator/test-data/migrations"
 ```
+
+There is a simple Docker Compose file provided that will allow you to test out your migrations.
