@@ -35,7 +35,7 @@ namespace Sparql.Migrator
                 var migrationHash = mig.DataProperty<string>("mig:migrationHash");
                 var migratorVersion = mig.DataProperty<string>("mig:migratorVersion");
                 var originalPath = mig.DataProperty<string>("mig:originalPath");
-                result.AddPreviouslyAppliedMigration(new Migration
+                result.AppendMigration(new Migration
                 {
                     ordinal = ordinal,
                     dtApplied = dtApplied,
@@ -84,7 +84,7 @@ namespace Sparql.Migrator
             return result;
         }
 
-        public void OnNewScriptApplication(CurrentState currentState, Migration mig)
+        public void RecordSuccessfulMigration(CurrentState currentState, Migration mig)
         {
             var ps = new SparqlParameterizedString();
             ps.CommandText = @"

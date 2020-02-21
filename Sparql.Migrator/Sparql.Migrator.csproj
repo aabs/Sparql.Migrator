@@ -1,15 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>sparqlmigrate</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Deterministic>false</Deterministic>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Autofac" Version="5.1.2" />
-    <PackageReference Include="CommandLineParser" Version="2.7.82" />
+    <PackageReference Include="ConsoleAppFramework" Version="2.1.0" />
     <PackageReference Include="dotNetRDF" Version="2.4.0" />
     <PackageReference Include="System.IO.Abstractions" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="nupkg\" />
   </ItemGroup>
 
 </Project>

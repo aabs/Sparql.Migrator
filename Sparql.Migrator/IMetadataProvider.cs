@@ -3,6 +3,6 @@
     public interface IMetadataProvider : IOptionsValidator
     {
         CurrentState GetCurrentState();
-        void OnNewScriptApplication(CurrentState state, Migration mig);
+        void RecordSuccessfulMigration(CurrentState state, Migration mig);
     }
 }

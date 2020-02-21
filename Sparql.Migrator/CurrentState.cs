@@ -5,7 +5,7 @@ namespace Sparql.Migrator
     public class CurrentState
     {
         private readonly List<Migration> _migrations = new List<Migration>();
-        public void AddPreviouslyAppliedMigration(Migration mig)
+        public void AppendMigration(Migration mig)
         {
             _migrations.Add(mig);
         }

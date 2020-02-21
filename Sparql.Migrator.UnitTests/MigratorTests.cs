@@ -62,7 +62,7 @@ namespace Sparql.Migrator.UnitTests
             sut.Run();
             scriptApplicator.Verify(sa => sa.ApplyScript(It.IsAny<Script>()), Times.Exactly(extraScripts));
             metadataProvider.Verify(
-                mp => mp.OnNewScriptApplication(
+                mp => mp.RecordSuccessfulMigration(
                     It.Is<CurrentState>(c => c.Equals(currentState)),
                     It.IsAny<Migration>()), Times.Exactly(extraScripts));
         }
@@ -104,7 +104,7 @@ namespace Sparql.Migrator.UnitTests
             sut.Run();
             scriptApplicator.Verify(sa => sa.ApplyScript(It.IsAny<Script>()), Times.Exactly(extraScripts));
             metadataProvider.Verify(
-                mp => mp.OnNewScriptApplication(
+                mp => mp.RecordSuccessfulMigration(
                     It.Is<CurrentState>(c => c.Equals(currentState)),
                     It.IsAny<Migration>()), Times.Exactly(applicationIsSuccessful?extraScripts:0));
         }
@@ -114,7 +114,7 @@ namespace Sparql.Migrator.UnitTests
             var result = new CurrentState();
             foreach (var i in Enumerable.Range(0, quantityOfPriorMigrations))
             {
-                result.AddPreviouslyAppliedMigration(new Migration
+                result.AppendMigration(new Migration
                 {
                     ordinal = i,
                     appliedBy = "andrewm",

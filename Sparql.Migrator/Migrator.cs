@@ -37,7 +37,7 @@ namespace Sparql.Migrator
                     {
                         if (_scriptApplicator.ApplyScript(script))
                         {
-                            WriteUpdateEntry(script, currentState);
+                            RecordScriptSuccess(script, currentState);
                         }
                     }
                 }
@@ -52,13 +52,7 @@ namespace Sparql.Migrator
             }
         }
 
-        public void WriteUpdateEntry(Script script, CurrentState currentState)
-        {
-            var mig = CommitNewScriptAsMigrationRecord(script, currentState);
-            currentState.AddPreviouslyAppliedMigration(mig);
-        }
-
-        public Migration CommitNewScriptAsMigrationRecord(Script script, CurrentState currentState)
+        public void RecordScriptSuccess(Script script, CurrentState currentState)
         {
             int ord = 0;
             var mostRecentMigration = currentState.Migrations.OrderByDescending(m => m.ordinal).FirstOrDefault();
@@ -79,15 +73,14 @@ namespace Sparql.Migrator
 
             try
             {
-                _metadataProvider.OnNewScriptApplication(currentState, mig);
+                _metadataProvider.RecordSuccessfulMigration(currentState, mig);
+                currentState.AppendMigration(mig);
             }
             catch
             {
                 Console.WriteLine("Unable to update metadata");
                 throw;
             }
-
-            return mig;
         }
 
         public bool ScriptShouldBeRun(Script script, CurrentState currentState)

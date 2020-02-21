@@ -1,31 +1,39 @@
 ﻿using System;
-using System.IO;
 using System.IO.Abstractions;
+using System.Threading.Tasks;
 using Autofac;
-using CommandLine;
-using CommandLine.Text;
+using ConsoleAppFramework;
+using Microsoft.Extensions.Hosting;
 using VDS.RDF.Query;
 using VDS.RDF.Update;
 
 namespace Sparql.Migrator
 {
-    class Program
+    class Program : ConsoleAppBase
     {
         private static IContainer _container;
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            var parserResult = Parser.Default.ParseArguments<Options>(args);
-            parserResult
-                .WithParsed<Options>(o =>
-                {
-                    SetupIocContainer(o);
-                    using (var scope = _container.BeginLifetimeScope())
-                    {
-                        var migrator = scope.Resolve<IMigrator>();
-                        migrator.Run();
-                    }
-                });
+            // target T as ConsoleAppBase.
+            await Host.CreateDefaultBuilder().RunConsoleAppFrameworkAsync<Program>(args);
+        }
+
+        public void Migrate(
+            [Option("s", "Full URI of read/write endpoint of Triple Store.")]
+            string server,
+            [Option("p", "Root path of migration query scripts.")]
+            string scripts,
+            [Option("v", "Set output to verbose messages.")]
+            bool verbose = false)
+        {
+            var options = new Options {ServerEndpoint = server, Path = scripts, Verbose = verbose};
+            SetupIocContainer(options);
+            using (var scope = _container.BeginLifetimeScope())
+            {
+                var migrator = scope.Resolve<IMigrator>();
+                migrator.Run();
+            }
         }
 
         private static void SetupIocContainer(Options o)
