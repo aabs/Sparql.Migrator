@@ -3,17 +3,18 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sparql.Migrator", "Sparql.Migrator\Sparql.Migrator.csproj", "{69BA8E33-3632-4C8A-BC89-6762CB1C02E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sparql.Migrator", "Sparql.Migrator\Sparql.Migrator.csproj", "{69BA8E33-3632-4C8A-BC89-6762CB1C02E8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1FABDB09-186C-44B1-8BFF-4D554B2F9DB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sparql.Migrator.UnitTests", "Sparql.Migrator.UnitTests\Sparql.Migrator.UnitTests.csproj", "{0673A474-F79D-4318-9E29-5634CB72782C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sparql.Migrator.UnitTests", "Sparql.Migrator.UnitTests\Sparql.Migrator.UnitTests.csproj", "{0673A474-F79D-4318-9E29-5634CB72782C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7D1713DB-EB14-4CD0-84E6-D9B451E70DED}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		docker-compose.yml = docker-compose.yml
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{41EE48A2-A020-40F5-A4CE-FCDE52A2F508}"
