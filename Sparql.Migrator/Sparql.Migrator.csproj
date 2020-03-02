@@ -2,14 +2,14 @@
   
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>sparqlmigrate</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
-
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Deterministic>false</Deterministic>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode>true</RestoreLockedMode>
+    <NoWarn>NU1603</NoWarn>
+    <DisableImplicitNuGetFallbackFolder>false</DisableImplicitNuGetFallbackFolder>
   </PropertyGroup>
 
   <ItemGroup>

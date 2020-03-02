@@ -74,3 +74,29 @@ $ Sparql.Migrator.exe -s "http://localhost:8889/blazegraph/namespace/kb/sparql" 
 ```
 
 There is a simple Docker Compose file provided that will allow you to test out your migrations.
+
+
+# Using Migrator as a Docker Container
+
+You can use a packaged version of Sparql Migrator using Docker.
+
+
+```shell
+docker run -v ${path}:/data --rm -it sparqlmigrator:v0.1.0 \
+-s "https://ent-bkb-rel-neptune-master-cluster.cluster-cg5vfywesksh.ap-southeast-2.neptune.amazonaws.com:33107/sparql" \
+-p /data
+```
+
+This particular script is packaged up in `migrate.ps1`, so all you really need to do is:
+
+```shell
+.\migrate.ps1
+```
+
+However if your connection strings or migration paths are different then you can invoke the powershell script like this:
+
+```shell
+.\migrate.ps1 -server <your server> -path <your path>
+```
+
+Remember, since you are invoking a Docker container, local paths must be absolute.
