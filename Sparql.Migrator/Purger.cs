@@ -35,6 +35,6 @@ namespace Sparql.Migrator
 
     public interface IPurger
     {
-        public void Run();
+        void Run();
     }
 }
