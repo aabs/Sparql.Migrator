@@ -1,5 +1,5 @@
 #!/usr/bin/env powershell
-Set-Variable -Name "version" -Value "v0.1.0"
+Set-Variable -Name "version" -Value "v0.1.1"
 
 Remove-Item -Path .\obj -Recurse
 Remove-Item -Path .\bin -Recurse

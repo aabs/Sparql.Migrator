@@ -5,4 +5,4 @@ param (
     [string]$path = "C:\Users\pra.andrewm\source\repos\entity.basketball.relationships.seeddata\update-scripts"
 )
 
-docker run -v ${path}:/data --rm -it sparqlmigrator:v0.1.0 migrate -s ${server} -p /data
+docker run -v ${path}:/data --rm -it sparqlmigrator:v0.1.1 purge -s ${server}

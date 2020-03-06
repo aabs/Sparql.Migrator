@@ -19,6 +19,21 @@ namespace Sparql.Migrator
             await Host.CreateDefaultBuilder().RunConsoleAppFrameworkAsync<Program>(args);
         }
 
+        [Command("purge")]
+        public void Purge(
+            [Option("s", "Full URI of read/write endpoint of Triple Store.")]
+            string server)
+        {
+            var options = new Options {ServerEndpoint = server, Path = "", Verbose = true};
+            SetupIocContainer(options);
+            using (var scope = _container.BeginLifetimeScope())
+            {
+                var purger = scope.Resolve<IPurger>();
+                purger.Run();
+            }
+        }
+
+        [Command("migrate")]
         public void Migrate(
             [Option("s", "Full URI of read/write endpoint of Triple Store.")]
             string server,
@@ -47,6 +62,7 @@ namespace Sparql.Migrator
                 .As<ISparqlUpdateProcessor>();
             builder.RegisterType<FileSystem>().As<IFileSystem>();
             builder.RegisterType<Migrator>().AsImplementedInterfaces();
+            builder.RegisterType<Purger>().AsImplementedInterfaces();
             builder.RegisterType<MetadataProvider>().AsImplementedInterfaces();
             builder.RegisterType<ScriptApplicator>().AsImplementedInterfaces();
             builder.RegisterType<ScriptProvider>().AsImplementedInterfaces();
